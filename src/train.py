@@ -1,9 +1,8 @@
 import pytorch_lightning as pl
 import yaml
+from model import RoBERTaClassification
 from pytorch_lightning.callbacks import ModelCheckpoint
-
-from src.model import RoBERTaClassification
-from src.utils import get_project_root
+from utils import get_project_root
 
 PROJECT_ROOT = get_project_root()
 
@@ -15,7 +14,7 @@ if __name__ == "__main__":
     checkpoint_callback = ModelCheckpoint(params["training"]["logdir"])
     trainer = pl.Trainer(
         callbacks=[checkpoint_callback],
-        max_epochs=params["num_epochs"],
+        max_epochs=params["training"]["num_epochs"],
     )
 
     trainer.fit(classifier)

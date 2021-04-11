@@ -96,10 +96,7 @@ class RoBERTaClassification(pl.LightningModule):
 
     def get_dataset(self, filename):
         # Find path to right directory
-        if self.params["data"]["is_balanced"]:
-            data_dir_path = self.params["data"]["path_to_balanced_data"]
-        else:
-            data_dir_path = self.params["data"]["path_to_imbalanced_data"]
+        data_dir_path = self.params["data"]["path_to_data"]
 
         df = pd.read_csv(Path(data_dir_path) / filename)
         dataset = TextClassificationDataset(

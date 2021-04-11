@@ -155,11 +155,6 @@ def generate_datasets(params: dict):
     positive_idxs = np.where(np.array(raw_data["label"]) == 1)[0]
     negative_idxs = np.where(np.array(raw_data["label"]) == 0)[0]
 
-    if params["data"]["is_balanced"]:
-        min_idxs = min(len(positive_idxs), len(negative_idxs))
-        positive_idxs = np.random.choice(positive_idxs, min_idxs, replace=False)
-        negative_idxs = np.random.choice(negative_idxs, min_idxs, replace=False)
-
     valid_idxs = np.concatenate([positive_idxs, negative_idxs])
 
     # Splitting indexes into train/test

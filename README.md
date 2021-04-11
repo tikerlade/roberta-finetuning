@@ -51,7 +51,7 @@ python src/train.py
 ```
 
 ## Запуск предсказаяния
-Перед запуском предсказаний необходимо скачать модель либо обучить ее.
+Модель обучалась с помощью PyTorch Lighning. Перед запуском предсказаний необходимо скачать модель либо обучить ее.
 ```python
 python src/comments_classifier.py "This is text for classification."
 ```
