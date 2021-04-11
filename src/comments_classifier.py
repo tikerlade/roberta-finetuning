@@ -12,8 +12,9 @@ logging.basicConfig(level=logging.INFO)
 PROJECT_ROOT = get_project_root()
 
 
-def load_model(model_path):
-    model = RoBERTaClassification.load_from_checkpoint(model_path)
+def load_model(params):
+    model_path = PROJECT_ROOT / params["model"]["model_path"]
+    model = RoBERTaClassification.load_from_checkpoint(model_path, hyper_params=params)
     model.eval()
     return model
 
@@ -22,7 +23,7 @@ def get_hate_proba(params, text: str):
     text = filter_text(text)
 
     logging.info("Model loading...")
-    model = load_model(PROJECT_ROOT / params["model"]["model_path"])
+    model = load_model(params)
 
     prediction = softmax(model(**model.encode(text)).tolist()[0])
     print(prediction)

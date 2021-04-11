@@ -136,5 +136,4 @@ dmypy.json
 # Personal
 *.ini
 package/dist/
-/logdir/
-/lightning_logs/
+/logdir/tuned_model.ckpt
