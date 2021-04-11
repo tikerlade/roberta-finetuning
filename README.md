@@ -11,15 +11,19 @@
 * **Обученная модель** находится по [ссылке](https://drive.google.com/drive/folders/1HcpTX4WHSfP_Bysy-yzKjazuR7IoVfkM?usp=sharing), потому что ее размер 500MB, что превышает
   максимальный размер файла
   на GitHub.
-* **До дообучения** используется [zero shot classification](https://discuss.huggingface.
-  co/t/new-pipeline-for-zero-shot-text-classification/681) из transformers
+* **До дообучения** используется [zero shot classification](https://discuss.huggingface.co/t/new-pipeline-for-zero-shot-text-classification/681) из transformers
 * В процессе EDA стало ясно, что имеется дисбаланс классов (0 - 93%; 1 - 7%), поэтому в качестве метрики кроме
   Accuracy я использовал также и F1-score.
 
 
 ## Результат
+**TL;DR** - fine-tuned RoBERTa показала лучшее качество.
+
 ### Графика
 **PR кривые:**
+
+График дообученной модель больше изогнут вверх, что хорошо для PR-кривой. Это означает, что обученная модель лучше предсказывает нужный класс.
+
 
 ![PR Curve of zero-shot vs fine-tuned](img/pr_curve.png)
 
@@ -31,8 +35,10 @@
 ### Сравнения
 Как видно из сравнения метрик - `zero-shot-classification` показывает более низкое качество, нежели дообученная модель.
 
-* `zero-shot-classification`: Accuracy: 0.90, F1: 0.43 (threshold: 0.5)
-* `fine-tuned`: Accuracy: 0.94, F1: 0.57 (threshold: 0.2496)
+|      Model                 | Accuracy      | F1-score      |
+| -------------------------- | ------------- |:-------------:|
+| `zero-shot-classification` | 0.90          | 0.43          |
+| `finetuned-roberta`        | **0.94**          | **0.57**          |
 
 Модель обучалась на CPU, что не позволило произвести много эпох. Однако при использовании GPU качество могло еще подняться.
 
@@ -54,6 +60,12 @@ python src/comments_classifier.py "This is text for classification."
 ### Файлы и директории
 * `src/` - основная директория с кодом и Jupyter ноутбуком
 * `src/comments_classifier.py` - CLI интерфейс для работы с предсказаниями
+* `src/data.py` - описание TextClassificationDataset, который используется в процессе обучения
+* `src/model.py` - описание RoBERTaClassification - сама модель для дообучения с одним дополнительным слоем
+* `src/train.py` - код, запускающий обучение модели
+* `src/utils.py` - не содержащий главной логики код - вспомагательные функции
+* `src/Analysis.ipynb` - сравнение моделей, немного EDA и графиков
+
 
 * `data/` - данные для обучения, валидации, теста в `.csv` формате
 * `data/output` - результаты классификации тестовых данных двумя разными методами
