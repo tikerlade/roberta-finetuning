@@ -24,14 +24,28 @@
 
 Модель обучалась на CPU, что не позволило произвести много эпох. Однако при использовании GPU качество могло еще подняться.
 
-PR кривые:
+## Графика
+**PR кривые:**
+
 ![PR Curve of zero-shot vs fine-tuned](img/pr_curve.png)
 
-**CLI интерфес**
+
+**CLI интерфейс**
+
 ![CLI](img/finetuned_roberta_cli.gif)
 
 
+## Запуск дообучения
+```python
+pip install -r requirements.txt
+python src/train.py
+```
 
+## Запуск предсказаяния
+Перед запуском предсказаний необходимо скачать модель либо обучить ее.
+```python
+python src/comments_classifier.py "This is text for classification."
+```
 
 
 ### Файлы и директории
