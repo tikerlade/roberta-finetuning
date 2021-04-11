@@ -1,28 +1,32 @@
 data:
   path_to_data: data/
-  train_filename: train_tweets_hate_speech_detection.csv
-  validation_filename: valid_tweets_hate_speech_detection.csv
-  test_filename: test_tweets_hate_speech_detection.csv
+
+  train_filename: train_tweets_hatespeech.csv
+  validation_filename: valid_tweets_hatespeech.csv
+  test_filename: test_tweets_hatespeech.csv
+
   text_field_name: tweet
   label_field_name: label
-  path_to_test_zero_shot: data/output/pred_zero_shot.txt
-  path_to_test_finetuned: data/output/pred_finetuned.txt
+
+  path_to_test_zero_shot: output/zero_shot_predictions.json
+  path_to_test_finetuned: output/finetuned_predictions.txt
 
 model:
-  model_name: roberta-base               # pretrained model from Transformers
+  model_path: logdir/tuned_model.ckpt
+  model_name: roberta-base              # pretrained model from Transformers
   max_seq_length: 32                    # depends on your available GPU memory (in combination with batch size)
   num_classes: 2
 
 training:
-  learn_rate: 3e-5                       # learning rate is typically ~1e-5 for transformers
-  num_epochs: 1                          # smth around 2-6 epochs is typically fine when finetuning transformers
-  accum_steps: 4                         # one optimization step for that many backward passes
-  batch_size: 64                          # depends on your available GPU memory (in combination with max seq length)
-  log_dir: logdir                        # for training logs and tensorboard visualizations
+  learn_rate: 3e-4                       # learning rate is typically ~1e-5 for transformers
+  num_epochs: 20                          # smth around 2-6 epochs is typically fine when finetuning transformers
+  batch_size: 128                         # depends on your available GPU memory (in combination with max seq length)
+  log_dir: ../logdir                        # for training logs and tensorboard visualizations
+  checkpoints_testing: ../logdir/checkpoints_testing
   fp16_params: None                      # fp16 support
   train_size: 0.6
   validation_size: 0.2
   test_size: 0.2
 
 general:
-  seed: 17                               # random seed for reproducibility
+  seed: 7                               # random seed for reproducibility

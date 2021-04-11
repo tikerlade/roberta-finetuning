@@ -1,15 +1,21 @@
-import logging
 from pathlib import Path
 from typing import List, Mapping, Tuple
 
+import numpy as np
 import pandas as pd
 import torch
-from catalyst.utils import set_global_seed
+from datasets import load_dataset
+from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer
+from utils import filter_text, set_global_seed
 
 
 class TextClassificationDataset(Dataset):
+    """
+    Wrapper around Torch Dataset to perform text classification
+    """
+
     def __init__(
         self,
         texts: List[str],
@@ -18,26 +24,15 @@ class TextClassificationDataset(Dataset):
         max_seq_length: int = 512,
         model_name: str = "roberta-base",
     ):
-
-        self.texts = texts
+        self.texts = list(map(filter_text, texts))
         self.labels = labels
         self.label_dict = label_dict
         self.max_seq_length = max_seq_length
 
         if self.label_dict is None and labels is not None:
-            # {'class1': 0, 'class2': 1, 'class3': 2, ...}
-            # using this instead of `sklearn.preprocessing.LabelEncoder`
-            # no easily handle unknown target values
             self.label_dict = dict(zip(sorted(set(labels)), range(len(set(labels)))))
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        # suppresses tokenizer warnings
-        logging.getLogger("transformers.tokenization_utils").setLevel(logging.FATAL)
-
-        # special tokens for transformers
-        # in the simplest case a [CLS] token is added in the beginning
-        # and [SEP] token is added in the end of a piece of text
-        # [CLS] <indexes text tokens> [SEP] .. <[PAD]>
 
     def __len__(self) -> int:
         """
@@ -48,6 +43,7 @@ class TextClassificationDataset(Dataset):
 
     def __getitem__(self, index) -> Mapping[str, torch.Tensor]:
         """Gets element of the dataset
+
         Args:
             index (int): index of the element in the dataset
         Returns:
@@ -60,7 +56,6 @@ class TextClassificationDataset(Dataset):
         # a dictionary with `input_ids` and `attention_mask` as keys
         output_dict = self.tokenizer.encode_plus(
             x,
-            add_special_tokens=True,
             padding="max_length",
             max_length=self.max_seq_length,
             return_tensors="pt",
@@ -82,6 +77,13 @@ class TextClassificationDataset(Dataset):
 
 
 def read_data(params: dict) -> Tuple[dict, dict]:
+    """
+    A custom function that reads data from CSV files, creates PyTorch datasets and
+    data loaders. The output is provided to be easily used with Catalyst
+
+    :param params: a dictionary read from the config.yml file
+    :return: a tuple with 2 dictionaries
+    """
     # reading CSV files to Pandas dataframes
     train_df = pd.read_csv(
         Path(params["data"]["path_to_data"]) / params["data"]["train_filename"]
@@ -140,3 +142,58 @@ def read_data(params: dict) -> Tuple[dict, dict]:
     }
 
     return train_val_loaders, test_loaders
+
+
+def generate_datasets(params: dict):
+    # Set reptoducability
+    set_global_seed(params["general"]["seed"])
+
+    # Retrieve original dataset
+    raw_data = load_dataset("tweets_hate_speech_detection")["train"]
+
+    # Split postitive / negative indexes
+    positive_idxs = np.where(np.array(raw_data["label"]) == 1)[0]
+    negative_idxs = np.where(np.array(raw_data["label"]) == 0)[0]
+
+    if params["data"]["is_balanced"]:
+        min_idxs = min(len(positive_idxs), len(negative_idxs))
+        positive_idxs = np.random.choice(positive_idxs, min_idxs, replace=False)
+        negative_idxs = np.random.choice(negative_idxs, min_idxs, replace=False)
+
+    valid_idxs = np.concatenate([positive_idxs, negative_idxs])
+
+    # Splitting indexes into train/test
+    train_indexes, test_indexes = train_test_split(
+        valid_idxs, train_size=params["training"]["train_size"]
+    )
+    test_indexes, val_indexes = train_test_split(
+        test_indexes,
+        train_size=params["training"]["test_size"]
+        / params["training"]["validation_size"]
+        / 2,
+    )
+
+    # Split dataset by indexes
+    train_data = pd.DataFrame(raw_data[train_indexes])
+    valid_data = pd.DataFrame(raw_data[val_indexes])
+    test_data = pd.DataFrame(raw_data[test_indexes])
+
+    # Find path to right directory
+    if params["data"]["is_balanced"]:
+        data_dir_path = params["data"]["path_to_balanced_data"]
+    else:
+        data_dir_path = params["data"]["path_to_imbalanced_data"]
+
+    # Save datasets to path for further training
+    train_data.to_csv(
+        Path(data_dir_path) / params["data"]["train_filename"],
+        index=False,
+    )
+    valid_data.to_csv(
+        Path(data_dir_path) / params["data"]["validation_filename"],
+        index=False,
+    )
+    test_data.to_csv(
+        Path(data_dir_path) / params["data"]["test_filename"],
+        index=False,
+    )

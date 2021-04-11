@@ -137,3 +137,4 @@ dmypy.json
 *.ini
 package/dist/
 /logdir/
+/lightning_logs/

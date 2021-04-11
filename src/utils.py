@@ -1,5 +1,11 @@
+# -*- coding: utf-8 -*-
+import random
+import re
+import string
+from pathlib import Path
+
 import numpy as np
-import yaml
+import torch
 from matplotlib import pyplot as plt
 from sklearn.metrics import (
     accuracy_score,
@@ -8,8 +14,25 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-with open("config.yml") as f:
-    params = yaml.load(f, Loader=yaml.FullLoader)
+chars_to_delete = string.punctuation + "©\xa0\xad\t\n\r\x0b\x0c«»‘’£"
+trans_table = str.maketrans("", "", chars_to_delete)
+trans_table[ord("-")] = " "
+
+
+def get_project_root() -> Path:
+    return Path(__file__).parent.parent
+
+
+def filter_text(text: str) -> str:
+    text = text.replace("\\n", "").translate(trans_table)
+    return re.sub(" +", " ", text).lower()
+
+
+def set_global_seed(seed: int) -> None:
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    random.seed(seed)
+    np.random.seed(seed)
 
 
 def get_best_threshold(y_true, pred_probs):
